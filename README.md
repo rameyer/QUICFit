@@ -25,7 +25,7 @@ QUICFit takes as an input a spectra given as as ASCII file with the observed wav
 The example.py script and should be ready to run out of the box. After launching it, you should obtain the following plot:
 
 
-![J0002+2550 Fit](https://github.com/rameyer/QUICFit/blob/master/src/data/J0002%2B2550_fit.pdf)
+![J0002+2550 Fit](https://github.com/rameyer/QUICFit/blob/master/src/data/J0002%2B2550_fit.png)
 
 The example script shows the very basic of QUICFit: the initialization of the fitter, and the fitting function. 
 ```
