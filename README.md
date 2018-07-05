@@ -22,8 +22,11 @@ If this fails, you may need more detailed installation instruction. Please conta
 
 QUICFit takes as an input a spectra given as as ASCII file with the observed wavelength (in Angstroms), flux and error array (Arbitrary units).
 
-The example.py script shows the very basic of QUICFit: the initialization of the fitter, and the fitting function. It should be ready to run out of the box.
+The example.py script and should be ready to run out of the box. After launching it, you should obtain the following plot:
 
+(https://github.com/rameyer/QUICFit/src/data/J0002+2550_fit.pdf)
+
+The example script shows the very basic of QUICFit: the initialization of the fitter, and the fitting function. 
 ```
 >>> fitter = QCF.QSOContFitter(wave=spectra[:,0], flux=spectra[:,1], err=spectra[:,2],
 				QSO_lines_list = lines_list, QSO_lines_list_err = lines_list_err,
