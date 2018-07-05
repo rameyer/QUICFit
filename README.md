@@ -23,9 +23,9 @@ QUICFit is based (for now) on an unique module QUICFit.QSOContFitter, which shou
 
 ```
 $ python3
->>> import SEDmaker.QSOContFitter as QCF
+>>> import QUICFit.QUICFit as QCF
 >>> spectra = np.loadtxt('./DIRECTORY/YOUR_NICE_QSO_SPECTRA.txt')
->>> fitter = QCF(wave = spectra[:,0], flux = spectra[:,1], err = spectra[:,2], redshift_QSO = 5)
+>>> fitter = QCF.QSOContFitter(wave = spectra[:,0], flux = spectra[:,1], err = spectra[:,2], redshift_QSO = 5)
 ```
 
 The observed wavelength (in Angstroms), flux and error array (Arbitrary units) should be supplied at initialization. Other parameters can be supplied as: 
@@ -53,9 +53,6 @@ The important parameters here are:
 ```
 	bounds: 1x2 array, the bounds in rest-frame wavelenght where the fit is to be performed
 	show_plots: Boolean, whether or not you would like to see the intermediate steps of the fit
-	chi_min: Float, minimal chi square for the last spline fit
-	chi_max: Float, maximal chi square for the last spline fit
-	N_steps: Float, Number of iterations to find the best-fit spline solution
 	bin_width: Float, Pixel width of windows to compute the local variance of the pixel-to-pixel flux difference
 	n_sigma: Float , Number of sigma from the mean of the distribution of the local flux difference variance to retain continuum pixels
 	save_fit_plot: Boolean, whether or not you would like to save a pdf of the final fit complete with observed flux, fit, and residuals
