@@ -117,8 +117,7 @@ class QSOContFitter(object):
 	Fitter.save_output(directory = './save/',filename = 'QSO_continuum.txt')
 	'''
 	
-	def __init__(self, wave, flux, std, redshift_QSO, alpha = 20, beta = 30,
-				 delta_A = 10, binning = 1,
+	def __init__(self, wave, flux, std, redshift_QSO, binning = 1,
 				 QSO_lines_list = np.array([1240,1260,1303,1335,1400,1549]),
 				 QSO_lines_list_err = np.array([5,5,5,5,5,5])):
 		'''
@@ -128,9 +127,6 @@ class QSOContFitter(object):
 			flux: A N array with the flux values (power-law normalized)
 			std: A N with the std/error of the instrument
 			redshift_QSO : The known redshift of the QSO
-			alpha: Penalization for an extra peak (only used forfree-fitting)
-			beta: Penalization for a missing peak (only used forfree-fitting)
-			delta_A: Tolerance in Angstroms on the location of peaks
 			binning: Re-binning of the spectra (>= 1)
 			QSO_lines_list: The list of expected rest-frame QSO broad lines
 			QSO_lines_list_err: The tolerance in rest-frame A of the lines
@@ -154,7 +150,8 @@ class QSOContFitter(object):
 
 		self.redshift_QSO = redshift_QSO
 
-		assert len(QSO_lines_list) == len(QSO_lines_list_err), 'QSO broad lines and errors list have discrepant length!'
+		assert len(QSO_lines_list) == len(QSO_lines_list_err), \
+			'QSO broad lines and errors list have discrepant length!'
 
 		self.QSO_lines_list = QSO_lines_list
 		self.QSO_lines_err = QSO_lines_list_err
@@ -171,15 +168,9 @@ class QSOContFitter(object):
 		else:
 			print('No re-binning required.')
 
-		# Penalization on extra peak
-		self.beta = beta
-		# Penalization on missing peak
-		self.alpha = alpha
-		# Tolerance on peak position (Angstroms)
-		self.delta_A = delta_A
 
-	def fit(self,bounds=[0,np.inf], show_plots = False, chi_min = 1, chi_max = 5, N_steps = 100, 
-			n_sigma = 1, bin_width = 10, save_fit_plot = False, directory = None, filename = None):
+	def fit(self,bounds=[0,np.inf], show_plots = False,  n_sigma = 1, bin_width = 10,
+	        save_fit_plot = False, directory = None, filename = None):
 
 		self._minmax_wavelength(bounds)
 
@@ -240,16 +231,14 @@ class QSOContFitter(object):
 
 	def _find_continuum(self, gaussian_amp = -0.5, gaussian_width = 20, 
 						n_sigma = 1, bin_width = 10, show_plots = False):
-		# What is continuum? Average noise-jumps from pixel to pixel
+		# What is a continuum? Average noise-jumps from pixel to pixel
 
-		#kernel_up = gaussian(np.linspace(0,20,20),gaussian_amp, gaussian_width,2,0)
+
 		kernel = gaussian(np.linspace(0,20,20),gaussian_amp, 10,gaussian_width)
 
-		#SNR_up = matched_filter(kernel_down,centered_flux,error)
 		SNR =  matched_filter(kernel,self.flux[self._min_index:self._max_index] 
 							- running_median(self.flux,50)[self._min_index:self._max_index],
 							self.std[self._min_index:self._max_index])
-		SNR = SNR
 
 		snr_indices = np.where(SNR<3)
 
@@ -263,7 +252,8 @@ class QSOContFitter(object):
 			plt.show()
 
 		print(self._min_index,self._max_index)
-		self.dflux_per_dpix = self.flux[self._min_index:self._max_index]-self.flux[self._min_index-1:self._max_index-1]
+		self.dflux_per_dpix = self.flux[self._min_index:self._max_index]-\
+		                      self.flux[self._min_index-1:self._max_index-1]
 
 		self.estimated_std = running_std(self.flux[1::]-
 							self.flux[0:-1],bin_width)[self._min_index:self._max_index]
@@ -271,7 +261,8 @@ class QSOContFitter(object):
 		self.average_std = running_average(self.std,bin_width)[self._min_index:self._max_index]
 
 		temp_std_ratio = np.array([est/average for est, average,s,f,e in 
-					zip(self.estimated_std,self.average_std,SNR,self.flux[self._min_index:self._max_index],
+					zip(self.estimated_std,self.average_std,SNR,
+					    self.flux[self._min_index:self._max_index],
 						self.std[self._min_index:self._max_index] ) 
 					if average>0 and est>0 and s < 3 and f/e >= 5 and est/average < 20 ])
 
@@ -286,19 +277,17 @@ class QSOContFitter(object):
 										hist[0:int(index_max*1.2)],
 										p0 = [1,np.max(bins_centers[int(index_max*1.2)]),0.4],
 										bounds = ([0.5,0,0],[1.0,np.inf,np.inf]))[0]
-		
-		plt.figure(figsize = (6,6))
+
 		if show_plots:
+			plt.figure(figsize=(6, 6))
 			plt.step(bins_centers,hist/np.max(hist),where = 'mid',color='k',label = r'$\hat \sigma / \sigma_{obs}$')
 			plt.plot(bins_centers,gaussian(bins_centers, parameters_gaussian[0],
 					 parameters_gaussian[1],parameters_gaussian[2],), '--c',label='Semi-gaussian fit')
 			plt.vlines(x =parameters_gaussian[1] + n_sigma*parameters_gaussian[2], 
 					   ymin = 0,ymax = np.max(hist)*1.1, color=  'r', linestyle = 'dashed' ,label = '1.5-$\sigma$ cut')
-			#plt.vlines(x=np.sqrt(2),ymin = 0,ymax = np.max(hist)*1.1, color=  'k', 
-			#		   linestyle = 'dashed')
 			plt.xlim(0,6)
 			plt.legend(fontsize=12)
-			plt.savefig('./Figures/J1030_sigma_hist.pdf',format = 'pdf',dpi = 500,transparent = True, bbox_inches='tight', pad_inches=0)
+			#plt.savefig('./Figures/sigma_hist.pdf',format = 'pdf',dpi = 500,transparent = True, bbox_inches='tight', pad_inches=0)
 			plt.show()
 
 		continuum_indices = np.array([temp_k for temp_k in 
@@ -348,16 +337,21 @@ class QSOContFitter(object):
 
 	def _spline_from_knots(self,knots):
 
-		spline =  LSQUnivariateSpline(x = self.wave[self._min_index:self._max_index][self.continuum_indices],
+		spline =  LSQUnivariateSpline(
+					x = self.wave[self._min_index:self._max_index][self.continuum_indices],
 					y =  self.flux[self._min_index:self._max_index][self.continuum_indices],
 					t = knots,
-					w = 1./self.std[self._min_index:self._max_index][self.continuum_indices] , k = 3)
+					w = 1./self.std[self._min_index:self._max_index][self.continuum_indices] ,
+					k = 3)
 		return spline
 
 	def _initialize_knots(self):
 		
-		lines_err_cropped = np.array([[line*(1+self.redshift_QSO),low_err*(1+self.redshift_QSO),high_err*(1+self.redshift_QSO)] 
-				for line,low_err,high_err in zip(self.QSO_lines_list,self.QSO_lines_err[:,0], self.QSO_lines_err[:,1])	
+		lines_err_cropped = np.array([[line*(1+self.redshift_QSO),
+		                               low_err*(1+self.redshift_QSO),
+		                               high_err*(1+self.redshift_QSO)]
+				for line,low_err,high_err in zip(self.QSO_lines_list,self.QSO_lines_err[:,0],
+									             self.QSO_lines_err[:,1])
 				if (line*(1+self.redshift_QSO) < self.wave[self._max_index] and
 			 		line*(1+self.redshift_QSO) > self.wave[self._min_index]) ])
 
@@ -421,44 +415,6 @@ class QSOContFitter(object):
 	def _find_continuum_values_in_range(self,wavemin, wavemax):
 		temp =  np.array([l for l in self.wave[self._min_index:self._max_index][self.continuum_indices] if (l < wavemax and l>wavemin) ] )  
 		return temp
-		 
-	def _find_best_spline(self,chi_min, chi_max, N_steps):
-
-		chi_array = np.linspace(chi_min,chi_max,N_steps)
-
-		for chi in chi_array:
-			spline, maximas_wave = self._1Dspline(chi)
-			metric = self._maximas_metric(maximas_wave) 
-			if chi == chi_min:
-				best_spline = spline
-				best_metric = metric
-				chi_best = chi
-			else:			
-				if metric < best_metric:
-					best_spline = spline
-					best_metric = metric
-					chi_best = chi
-
-		return best_spline, best_metric, chi_best
-
-	def _maximas_metric(self,wave_maximas):
-		
-		if type(wave_maximas) == np.float64:
-			wave_maximas = np.array([wave_maximas])
-		
-		_sum = 0
-		
-		for l in lines_list:
-			ind = np.where(np.abs(wave_maximas/(1+self.redshift_QSO)-l)
-														 <self.delta_A)
-			if np.size(ind) == 0 :
-				_sum += self.alpha
-			elif np.size(ind) > 1:
-				_sum += self.beta*np.size(ind)
-			else:
-				_sum += np.square(wave_maximas[ind]/(1+self.redshift_QSO) - l)
-		
-		return _sum
 
 	def _1Dspline(self,chi2_spline):
 
@@ -534,41 +490,3 @@ class QSOContFitter(object):
 		self.flux = np.array([np.mean(self.flux[n:n+self.binning]) for n in range(0,len(self.flux),self.binning) ])
 		self.std = np.array([np.mean(self.std[n:n+self.binning])/np.sqrt(self.binning) for n in range(0,len(self.std),self.binning) ])
 
-############# Prepping the data #######################
-
-spectra_DIR = './spectra_txt'
-
-lines_list = np.array([1240,1260,1268,1303,1335,1350,1390,1420,1540,1555,1880,1910,2200,2600])
-lines_list_err = np.array([[5,7],[5,2],[3,3],[3,5],[10,10],[5,5],[10,10],[10,10],[10,5],[5,5],[5,5],[5,5],[5,5],[5,5]])
-
-QSO_redshift = {'J0148+0600': 5.923 , 'J0836+0054':5.81 , 'J0927+2001': 5.772, 
-	'J1030+0524': 6.28, 'J1306+0356':6.016, 'J1319+0950': 6.132 , 'J0002+2550': 5.8 ,
-	'J0050+3445': 6.25, 'J0100+2802': 6.3 , 'J0353+0104': 6.072 , 'J0818+1722': 6.0 , 
-	'J0842+1218': 6.069, 'J1048+4637': 6.198 , 'J1137+3549': 6.01 , 'J1148+5251': 6.419 ,
-	'J1509-1749': 6.12, 'J1602+4228': 6.09, 'J2054-0005': 6.062, 'J2315-0023': 6.117, 
-	'J1420-1602': 5.73, 'J1411+1217': 5.9, 'J0840+5624' : 5.84, 'J0005-0006': 5.85,
-	'J1044-0125': 5.78, 'J0231-0728':5.42, 'J1022+2252':5.47}
-
-all_files = [f for f in listdir(spectra_DIR) 
-	if isfile(join(spectra_DIR, f))]
-
-################## Running the fitter ################
-for file_spectra in files_spectra:
-	print(file_spectra)
-
-	# This line only works if the QSO is included at the beginning ot the file name, 
-	# and in the format of the list provided above! Feel free to modify
-	z_QSO = QSO_redshift[file_spectra[0:10]]	
-
-	# Spectra should included in Lambda (Angstroms), Flux, Err three-column ascii format
-	# They should be already power-law normalized for better performance!
-	spectra = np.loadtxt('./spectra_txt/' + file_spectra ,skiprows =1)
-
-	Fitter = QSOContFitter(spectra[:,0], spectra[:,1], spectra[:,2], 
-				QSO_lines_list = lines_list, QSO_lines_list_err = lines_list_err,
-				redshift_QSO=z_QSO, binning = binning)
-	Fitter.fit(bounds = [1240,1700], show_plots = True, chi_min = 0.5, chi_max = 5, 
-		   N_steps = 50, bin_width = 20, n_sigma = 1.5, save_fit_plot = True,
-		   directory = './save_QSOcont/', filename  =  file_spectra[0:10]  +'_fit.pdf')
-
-	Fitter.save_output(directory = './save_QSOcont/',filename = file_spectra[0:10]  +'_continuum_NIR.txt')
