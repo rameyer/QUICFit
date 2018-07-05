@@ -12,23 +12,25 @@ $ cd QUICFit
 $ python3 setup.py install
 $ cd ..
 $ python3
->>> import QUICFit
+>>> import QUICFit.QUICFit as QCF
 ```
 
 If this fails, you may need more detailed installation instruction. Please contact me! Alternatively, the code is relatively simple and can be used as a local script.
 
 ### Getting started
 
-QUICFit is based (for now) on an unique module QUICFit.QSOContFitter, which should be called as 
+
+QUICFit takes as an input a spectra given as as ASCII file with the observed wavelength (in Angstroms), flux and error array (Arbitrary units).
+
+The example.py script shows the very basic of QUICFit: the initialization of the fitter, and the fitting function. It should be ready to run out of the box.
 
 ```
-$ python3
->>> import QUICFit.QUICFit as QCF
->>> spectra = np.loadtxt('./DIRECTORY/YOUR_NICE_QSO_SPECTRA.txt')
->>> fitter = QCF.QSOContFitter(wave = spectra[:,0], flux = spectra[:,1], err = spectra[:,2], redshift_QSO = 5)
+>>> fitter = QCF.QSOContFitter(wave=spectra[:,0], flux=spectra[:,1], err=spectra[:,2],
+				QSO_lines_list = lines_list, QSO_lines_list_err = lines_list_err,
+				redshift_QSO=QSO_redshift, binning = 1)
 ```
+ Some parameters of the initialization are here worth detailing a bit:
 
-The observed wavelength (in Angstroms), flux and error array (Arbitrary units) should be supplied at initialization. Other parameters can be supplied as: 
 ```
 	wave: A N array representing the wavelength of the flux datapoints
 	flux: A N array with the flux values (power-law normalized)
@@ -39,7 +41,7 @@ The observed wavelength (in Angstroms), flux and error array (Arbitrary units) s
 	QSO_lines_list_err: The tolerance in rest-frame A of the lines location
 ```
 
-Once the fitter is initialized, one can run the fit and save the result in a text file containing four columns: wavelength (rest-frame), flux, err, continuum:
+Once the fitter is initialized, one can run the fit and save the result in a text file containing 3 columns: wavelength (rest-frame), flux, error array:
 
 ```
 >>> fitter.fit(bounds = [1240,1700], show_plots = True, chi_min = 0.5, chi_max = 5, 
@@ -51,15 +53,18 @@ Once the fitter is initialized, one can run the fit and save the result in a tex
 The important parameters here are:
 
 ```
-	bounds: 1x2 array, the bounds in rest-frame wavelenght where the fit is to be performed
+	bounds: 1x2 array, the bounds in rest-frame wavelength where the fit is to be performed
 	show_plots: Boolean, whether or not you would like to see the intermediate steps of the fit
-	bin_width: Float, Pixel width of windows to compute the local variance of the pixel-to-pixel flux difference
-	n_sigma: Float , Number of sigma from the mean of the distribution of the local flux difference variance to retain continuum pixels
-	save_fit_plot: Boolean, whether or not you would like to save a pdf of the final fit complete with observed flux, fit, and residuals
+	bin_width: Float, Pixel width of windows to compute the local variance of
+	                  the pixel-to-pixel flux difference
+	n_sigma: Float , Number of sigma from the mean of the distribution
+	                 of the local flux difference variance to retain continuum pixels
+	save_fit_plot: Boolean, whether or not you would like to save a pdf of the final fit
 	directory: str , path to the directory where the fit is to be saved
 	filename: str, name of the fit pdf file
 ```
 
+Alternatively, you can follow the example.py script which replicates these steps.
 
 ### Improving QUICFit
 
