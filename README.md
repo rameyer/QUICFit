@@ -73,3 +73,12 @@ Alternatively, you can follow the example.py script which replicates these steps
 ### Improving QUICFit
 
 If you find any error/bug or have suggestions/improvements you'd like to see implemented, please raise an issue or contact me!
+
+### Acknowledging QUICFit in Scientific Publications
+
+Please cite Meyer et. al, 2018 in which QUICFit was presented first:
+
+```
+\bibitem[Meyer et al.(2018)]{2018arXiv180707899M} Meyer, R.~A., Bosman, S.~E.~I., Kakiichi, K., \& Ellis, R.~S.\ 2018, arXiv:1807.07899 
+```
+
